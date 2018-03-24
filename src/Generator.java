@@ -1,58 +1,52 @@
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+
+import static java.lang.Math.*;
 
 class Generator {
 
-    private static long x;
-    private static long y0;
-    private static long module = (long) Math.pow(2, 32);
+    private LinearCongruentialGenerator generator;
 
-    private static BigInteger[] generatePrimes512() {
+    Generator(LinearCongruentialGenerator generator) {
+        this.generator = generator;
+    }
+
+    private BigInteger[] generatePrimes512() {
         int bitLength = 512;
-        int[] t = new int[5];
-        t[0] = bitLength;
-        int s = 0;
-        for(int i = 0; i < t.length; i++) {
-            if(t[i] >= 33) {
-                t[i + 1] = (int) Math.floor(t[i] / 2);
-            } else {
-                s = i;
-                break;
-            }
+        List<Integer> t = new ArrayList<>();
+        t.add(bitLength);
+        int index = 0;
+        while(t.get(index) >= 33) {
+            int value = (int) floor(t.get(index) / 2);
+            t.add(value);
+            index++;
         }
-
-        BigInteger[] primes = new BigInteger[5];
-        primes[4] = BigInteger.probablePrime(t[4], new Random());
-        int m = s - 1;
-        long c = 0xD;
-        if(x == 0) {
-            x = 0x3DFC46F1;
-        }
-        y0 = x;
+        BigInteger[] primes = new BigInteger[t.size()];
+        primes[index] = BigInteger.probablePrime(t.get(index), new Random());
+        int m = index - 1;
         boolean flag = true;
         do {
-            int r = (int) Math.ceil(t[m] / 32);
-            long[] y = new long[r + 1];
+            int r = (int) Math.ceil(t.get(m) / 32);
             BigInteger n = BigInteger.ZERO;
             BigInteger k = BigInteger.ZERO;
             do {
                 if(flag) {
-                    y[0] = y0;
-                    for (int i = 0; i < y.length - 1; i++) {
-                        y[i + 1] = (97781173 * y[i] + c) % module;
-                    }
+                    long[] y = generator.next().limit(r).toArray();
                     BigInteger sum = BigInteger.ZERO;
-                    for (int i = 0; i < r + 1; i++) {
+                    for (int i = 0; i < r - 1; i++) {
                         BigInteger tmp = BigInteger.valueOf(y[i]).multiply(BigInteger.TWO.pow(32));
                         sum = sum.add(tmp);
                     }
-                    y0 = y[r];
-                    BigInteger tmp1 = new BigDecimal(BigInteger.TWO.pow(t[m] - 1))
+                    sum = sum.add(BigInteger.valueOf(generator.getSeed()));
+                    generator.setSeed(y[r - 1]);
+                    BigInteger tmp1 = new BigDecimal(BigInteger.TWO.pow(t.get(m) - 1))
                             .divide(new BigDecimal(primes[m + 1]), 0, RoundingMode.CEILING)
                             .toBigInteger();
-                    BigInteger tmp2 = new BigDecimal(BigInteger.TWO.pow(t[m] - 1).multiply(sum))
+                    BigInteger tmp2 = new BigDecimal(BigInteger.TWO.pow(t.get(m) - 1).multiply(sum))
                             .divide(new BigDecimal(primes[m + 1].multiply(BigInteger.TWO.pow(32 * r))), 0, RoundingMode.FLOOR)
                             .toBigInteger();
                     n = tmp1.add(tmp2);
@@ -61,9 +55,8 @@ class Generator {
                     }
                     k = BigInteger.ZERO;
                 }
-                // Шаг 11
                 primes[m] = primes[m + 1].multiply(n.add(k)).add(BigInteger.ONE);
-                if(primes[m].compareTo(BigInteger.TWO.pow(t[m])) > 0) {
+                if(primes[m].compareTo(BigInteger.TWO.pow(t.get(m))) > 0) {
                     flag = true;
                     continue;
                 }
@@ -81,29 +74,25 @@ class Generator {
         return primes;
     }
 
-    static BigInteger[] generatePrimes1024() {
+    BigInteger[] generatePrimes1024() {
         int bitLength = 1024;
-        long c = 0xD;
         BigInteger q = generatePrimes512()[1];
-        x = y0;
         BigInteger Q = generatePrimes512()[0];
         BigInteger p;
         BigInteger n = BigInteger.ZERO;
         BigInteger k = BigInteger.ZERO;
-        long[] y = new long[33];
+        int yLength = 32;
         boolean flag = true;
         do {
             if(flag) {
-                y[0] = y0;
-                for (int i = 0; i < y.length - 1; i++) {
-                    y[i + 1] = (97781173 * y[i] + c) % module;
-                }
+                long[] y = generator.next().limit(yLength).toArray();
                 BigInteger sum = BigInteger.ZERO;
                 for (int i = 0; i < y.length - 1; i++) {
                     BigInteger tmp = BigInteger.valueOf(y[i]).multiply(BigInteger.TWO.pow(32));
                     sum = sum.add(tmp);
                 }
-                y0 = y[y.length - 1];
+                sum = sum.add(BigInteger.valueOf(generator.getSeed()));
+                generator.setSeed(y[y.length - 1]);
                 BigInteger tmp1 = new BigDecimal(BigInteger.TWO.pow(bitLength - 1))
                         .divide(new BigDecimal(q.multiply(Q)), 0, RoundingMode.CEILING)
                         .toBigInteger();
@@ -132,7 +121,7 @@ class Generator {
         return new BigInteger[] {p, q};
     }
 
-    static BigInteger generateA(BigInteger p, BigInteger q) {
+    BigInteger generateA(BigInteger p, BigInteger q) {
         BigInteger d;
         BigInteger f;
         do {

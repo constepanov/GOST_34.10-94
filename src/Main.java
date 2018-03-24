@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Scanner;
 
+import static java.lang.Math.pow;
+
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -16,11 +18,18 @@ public class Main {
         System.out.println("2. Verify signature");
         int action = Integer.parseInt(scanner.nextLine());
         if(action == 1) {
-            BigInteger[] primes = Generator.generatePrimes1024();
+            LinearCongruentialGenerator g = new LinearCongruentialGenerator(
+                    0x3DFC46F1,
+                    97781173,
+                    0xD,
+                    (long) pow(2, 32)
+            );
+            Generator generator = new Generator(g);
+            BigInteger[] primes = generator.generatePrimes1024();
             BigInteger p = primes[0];
             BigInteger q = primes[1];
-            BigInteger a = Generator.generateA(p, q);
-            System.out.println("File with system parameters:");
+            BigInteger a = generator.generateA(p, q);
+            System.out.println("File for p, q, a:");
             String fileName = scanner.nextLine();
             File file = new File(fileName);
             String params = p.toString(16) + "\n" + q.toString(16) + "\n" + a.toString(16);
@@ -43,9 +52,9 @@ public class Main {
             file = new File(fileName);
             writeToFile(file, signature);
             System.out.println("Hash:" + hash);
-            System.out.println("Signature generation:" + signature);
+            System.out.println("Signature:" + signature);
         } else if(action == 2) {
-            System.out.println("File with system parameters:");
+            System.out.println("File with p, q, a:");
             File file = new File(scanner.nextLine());
             byte[] data = readFromFile(file);
             String[] params = new String(data).split("\n");
