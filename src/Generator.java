@@ -35,7 +35,7 @@ class Generator {
             BigInteger k = BigInteger.ZERO;
             do {
                 if(flag) {
-                    long[] y = generator.next().limit(r).toArray();
+                    long[] y = generator.rand().limit(r).toArray();
                     BigInteger sum = BigInteger.ZERO;
                     for (int i = 0; i < r - 1; i++) {
                         BigInteger tmp = BigInteger.valueOf(y[i]).multiply(BigInteger.TWO.pow(32));
@@ -85,7 +85,7 @@ class Generator {
         boolean flag = true;
         do {
             if(flag) {
-                long[] y = generator.next().limit(yLength).toArray();
+                long[] y = generator.rand().limit(yLength).toArray();
                 BigInteger sum = BigInteger.ZERO;
                 for (int i = 0; i < y.length - 1; i++) {
                     BigInteger tmp = BigInteger.valueOf(y[i]).multiply(BigInteger.TWO.pow(32));

@@ -35,10 +35,25 @@ public class Main {
             String params = p.toString(16) + "\n" + q.toString(16) + "\n" + a.toString(16);
             writeToFile(file, params);
             GOSTSignature ds = new GOSTSignature(p, q, a);
-            System.out.println("Enter the length of the key:");
-            int length = Integer.parseInt(scanner.nextLine());
-            BigInteger x = ds.generatePrivateKey(length);
-            BigInteger y = ds.generatePublicKey(x);
+            System.out.println("Key generation:");
+            System.out.println("1. Random");
+            System.out.println("2. By password");
+            int answer = Integer.parseInt(scanner.nextLine());
+            BigInteger x;
+            if(answer == 1) {
+                System.out.println("Enter the length of the key:");
+                int length = Integer.parseInt(scanner.nextLine());
+                x = ds.getRandomPrivateKey(length);
+            } else if(answer == 2) {
+                System.out.println("Enter password");
+                String password = scanner.nextLine();
+                String passwordHash = md4.toHexString(md4.digest(password.getBytes()));
+                System.out.println("Password hash: " + passwordHash);
+                x = ds.getPrivateKeyByPassword(passwordHash);
+            } else {
+                throw new RuntimeException("Unknown action");
+            }
+            BigInteger y = ds.getPublicKey(x);
             System.out.println("File for public key:");
             fileName = scanner.nextLine();
             File publicKey = new File(fileName);
@@ -82,7 +97,7 @@ public class Main {
                 System.out.print("FAIL");
             }
         } else {
-            System.out.println("Unknown action");
+            throw new RuntimeException("Unknown action");
         }
     }
 

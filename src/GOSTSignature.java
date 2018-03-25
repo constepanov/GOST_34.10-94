@@ -13,11 +13,11 @@ class GOSTSignature {
         this.a = a;
     }
 
-    BigInteger generatePublicKey(BigInteger x) {
+    BigInteger getPublicKey(BigInteger x) {
         return a.modPow(x, p);
     }
 
-    BigInteger generatePrivateKey(int bitLength) {
+    BigInteger getRandomPrivateKey(int bitLength) {
         if(bitLength < 0 || bitLength < 128 || bitLength > q.bitLength()) {
             throw new IllegalArgumentException("Wrong key length");
         }
@@ -27,6 +27,10 @@ class GOSTSignature {
             result = new BigInteger(bitLength, r);
         } while (result.compareTo(BigInteger.ZERO) < 0 || result.compareTo(q) > 0);
         return result;
+    }
+
+    BigInteger getPrivateKeyByPassword(String passwordHash) {
+        return new BigInteger(passwordHash, 16);
     }
 
     String sign(String hash, BigInteger x) {
@@ -65,8 +69,8 @@ class GOSTSignature {
         BigInteger z1 = s.multiply(v).mod(q);
         BigInteger z2 = q.subtract(r).multiply(v).mod(q);
         BigInteger u = a.modPow(z1, p).multiply(y.modPow(z2, p)).mod(p).mod(q);
-        System.out.println(r);
-        System.out.println(u);
+        System.out.println("r = " + r);
+        System.out.println("u = " + u);
         return r.equals(u);
     }
 

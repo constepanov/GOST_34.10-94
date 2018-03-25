@@ -15,7 +15,7 @@ class LinearCongruentialGenerator {
         this.m = m;
     }
 
-    LongStream next() {
+    LongStream rand() {
         return iterate(seed, x -> (a * x + c) % m).skip(1);
     }
 
